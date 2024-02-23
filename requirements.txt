@@ -3,3 +3,6 @@ streamlit
 pandas
 plotly
 openpyxl
+facebook-business
+requests
+python-dotenv

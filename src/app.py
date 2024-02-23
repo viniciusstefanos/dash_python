@@ -15,13 +15,13 @@ color_4 = '#DCB0F2'  # Lavanda
 color_5 = '#87C55F'  # Verde Oliva
 color_6 = '#9EB9F3'  # Azul Claro
 
-
+fonte = "../data/sp24/raw/Anúncios-API.xlsx"
 
 # Função para carregar os dados
 @st.cache_data
 def load_data():
     # O caminho para o arquivo Excel deve ser correto e relativo ao local onde o script é executado
-    data = pd.read_excel("../data/sp24/raw/Anúncios-SP24-.xlsx")
+    data = pd.read_excel(fonte)
     # Convertendo a coluna 'Dia' para datetime para facilitar a filtragem
     data['Dia'] = pd.to_datetime(data['Dia'])
    # Calcula as métricas de desempenho
@@ -53,13 +53,13 @@ end_date = st.sidebar.date_input("Data de término", value=max_date, min_value=m
 start_datetime = pd.to_datetime(start_date)
 end_datetime = pd.to_datetime(end_date)
 
-# Filtrando os dados
+# Filtrando os dadosgit
 filtered_data = data[(data['Dia'] >= start_datetime) & (data['Dia'] <= end_datetime)]
 
 
 #ÚLTIMA MODIFICAÇÃO EM:
 # Substitua 'df_path' pelo caminho até o seu arquivo de dados
-df_path = "../data/sp24/raw/Anúncios-SP24-.xlsx"
+df_path = fonte
 
 # Obter a última data de modificação do arquivo
 last_mod_time = os.path.getmtime(df_path)
@@ -69,7 +69,8 @@ last_mod_date = datetime.fromtimestamp(last_mod_time).strftime('%Y-%m-%d %H:%M:%
 
 # Exibindo na sidebar do Streamlit
 st.sidebar.markdown(
-    f"<span style='font-size: 12px; color: rgba(0,0,0,0.8);'>Data da última atualização: {last_mod_date}</span>", 
+    f"<span style='font-size: 12px; opacity: 0.7;'>Data da última atualização: {last_mod_date}</span>",
+ 
     unsafe_allow_html=True
 )
 
@@ -142,13 +143,37 @@ def create_funnel_chart(data):
     # Aplica uma única cor do tema a todas as barras do funil
     fig.update_traces(marker=dict(color=color_1))
 
-    fig.update_layout(xaxis_range=[-10000, 10000])
+    fig.update_traces(textfont=dict(size=16))
+
+    fig.update_layout(xaxis_range=[-8000, 8000])
 
     # Altera o formato dos números no eixo x para evitar a notação científica
     fig.update_layout(xaxis_tickformat='.')  # Use vírgula como separador de milhar
 
     fig.update_layout(height=700)
     return fig
+
+
+# Função para criar gráfico de CTR
+def create_performance_ctr_chart(filtered_data):
+    if 'Dia' in filtered_data.columns:
+        metrics_data = filtered_data[['Dia', 'CTR']].melt('Dia', var_name='Métricas', value_name='Valor')
+        fig = px.line(metrics_data, x='Dia', y='Valor', color='Métricas', title='CTR ao Longo do Tempo', color_discrete_map={
+                          'CTR': color_1
+                      })
+         # Atualiza o layout para mover a legenda para baixo
+        fig.update_layout(legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        ),
+        height=250)
+        return fig
+    else:
+        raise KeyError("Coluna 'Dia' não encontrada no DataFrame.")
+
 
 # Função para criar gráfico de linhas das métricas de desempenho
 def create_performance_metrics_chart(data):
@@ -170,26 +195,6 @@ def create_performance_metrics_chart(data):
     return fig
 
 
-# Função para criar gráfico de linhas das métricas de desempenho
-def create_performance_ctr_chart(filtered_data):
-    if 'Dia' in filtered_data.columns:
-        metrics_data = filtered_data[['Dia', 'CTR']].melt('Dia', var_name='Métricas', value_name='Valor')
-        fig = px.line(metrics_data, x='Dia', y='Valor', color='Métricas', title='CTR ao Longo do Tempo', color_discrete_map={
-                          'CTR': color_1
-                      })
-         # Atualiza o layout para mover a legenda para baixo
-        fig.update_layout(legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1
-        ),
-        height=200)
-        return fig
-    else:
-        raise KeyError("Coluna 'Dia' não encontrada no DataFrame.")
-
 
 
 # Calcula as métricas
@@ -207,16 +212,16 @@ def format_to_currency(value):
 metric_row = st.columns(5)
 
 with metric_row[0]:
-    st.metric(label="Soma de Valor Valor usado (BRL)", value=format_to_currency(soma_valor_gasto))
+    st.metric(label="Valor Valor usado (BRL)", value=format_to_currency(soma_valor_gasto))
 
 with metric_row[1]:
-    st.metric(label="Soma de Compras", value=f"{soma_compras}")
+    st.metric(label="Compras", value=f"{soma_compras}")
 
 with metric_row[2]:
-    st.metric(label="Média de CAC", value=format_to_currency(media_cac))
+    st.metric(label="CAC", value=format_to_currency(media_cac))
 
 with metric_row[3]:
-    st.metric(label="Soma de Valor de conversão da compra", value=format_to_currency(soma_faturamento))
+    st.metric(label="Valor de conversão da compra", value=format_to_currency(soma_faturamento))
 
 with metric_row[4]:
     st.metric(label="ROAS", value=f"{roas:.2f}")
